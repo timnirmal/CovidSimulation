@@ -5,11 +5,13 @@
 import random
 from typing import List
 
-populationSize = 100000
+populationSize = 100
 familySizeMin = 2
 familySizeMax = 7
 wearFaceMask = False
 fatalityRate = 0.1
+
+positiveDate = 5
 
 
 
@@ -56,7 +58,7 @@ class Person:
         Person.__lastId += 1
         self.age = None
         self.status = None
-        self.infectedDate = None
+        self.infectedDate = 0
 
     def get_id(self):
         return self.id
@@ -66,6 +68,35 @@ class Person:
 
     def get_age(self):
         return self.age
+
+    def set_positive(self):
+        self.status = "positive"
+
+    def set_infected(self):
+        self.status = "infected"
+
+    def set_recovered(self):
+        self.status = "recovered"
+
+    def set_infected_date(self, date):
+        self.infectedDate = date
+
+    def get_infected_date(self):
+        return self.infectedDate
+
+    def get_status(self):
+        return self.status
+
+    def get_status_str(self):
+        if self.status == "positive":
+            return "infected"
+        elif self.status == "infected":
+            return "infected"
+        elif self.status == "recovered":
+            return "recovered"
+        else:
+            return "healthy"
+
 
 
 class Family:
@@ -153,7 +184,7 @@ if __name__ == '__main__':
     familyCount = 0
     memberCountList: list[int] = []
     # create list number population size
-    for i in range(100000):
+    for i in range(populationSize):
         memberCountList.append(i)
 
     while familyCount < populationSize:
@@ -200,8 +231,94 @@ if __name__ == '__main__':
     print("Family count: " + str(len(familyList)))
 
 
+
+
+
+
+
+
+
+
     ######################################################################
-    """ Positive """
+    """ Run while loop until 100 days """
+
+    day = 1
+    positiveCount = 0
+    deathCount = 0
+    infectedCount = 0
+
+    while day < 10:
+        ######################################################################
+        """ Positive """
+        if day == 1:
+            print("Day " + str(day))
+            print("Make 1 Random Person Positive")
+
+            # get random person from personList
+            randomPerson = random.choice(personList)
+            # set person to be positive
+            randomPerson.set_infected()
+            randomPerson.set_infected_date(day)
+            positiveCount += 1
+
+            # print person id
+            print(randomPerson.get_id())
+            # print person age
+            print(randomPerson.get_age())
+            # print person is positive
+            print(randomPerson.get_status())
+
+            day += 1
+            continue
+
+        else:
+            ######################################################################
+            """ Infected """
+            print("Day " + str(day))
+            print("Infect 1 Random Person")
+
+            # get random person from personList
+            randomPerson = random.choice(personList)
+            # set person to be infected
+            randomPerson.set_infected()
+            randomPerson.set_infected_date(day)
+            positiveCount += 1
+
+            # print person id
+            print(randomPerson.get_id())
+            # print person age
+            print(randomPerson.get_age())
+            # print person is infected
+            print(randomPerson.get_status())
+
+            day += 1
+
+        ######################################################################
+        """ Process Positive Details of Each Person """
+        for person in personList:
+            dateSinceInfected = day - person.get_infected_date()
+
+            if dateSinceInfected == day:
+                print("Person not Infected")
+            elif dateSinceInfected < day:
+                print("Person Infected")
+            elif 5 <= dateSinceInfected <= 11:
+                print("Person is Positive")
+
+
+        ######################################################################
+        """ Show Data of each day """
+
+        print("Day " + str(day))
+        print("Positive Count: " + str(positiveCount))
+        print("Death Count: " + str(deathCount))
+        print("Infected Count: " + str(infectedCount))
+
+
+    print("END")
+
+
+
 
 
 
