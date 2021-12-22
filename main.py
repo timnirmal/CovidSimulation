@@ -3,16 +3,14 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import random
-from typing import List
 
-populationSize = 100000
+populationSize = 100
 familySizeMin = 2
 familySizeMax = 7
 wearFaceMask = False
 fatalityRate = 0.1
 
 positiveDate = 5
-
 
 
 class MyClass:
@@ -99,7 +97,6 @@ class Person:
             return "healthy"
 
 
-
 class Family:
     __familyId = 1
 
@@ -143,6 +140,52 @@ class Family:
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+
+
+def simulate(n_healthy, n_sick, iterations, personList):
+    healthy_history: list[int] = [n_healthy]
+    sick_history: list[int] = [n_sick]
+    recovered_history = [0]
+    dead_history = [0]
+    days = [day for day in range(iterations)]
+
+    for day in days:
+        healthy = 0
+        sick = 0
+        recovered = 0
+        dead = 0
+
+        for person in personList:
+            if person.status == 'sick' and person.time_sick < 15:
+                person.time_sick += 1
+            elif person.status == 'sick' and person.time_sick == 15:
+                # Dead or Alive
+                if random.randint(0, 9) == 4:
+                    person.status = 'dead'
+                else:
+                    person.status = 'recovered'
+
+            if person.status == 'healthy':
+                chance_of_infection = 0.0008
+                if random.random() < chance_of_infection:
+                    person.status = 'sick'
+
+        for person in personList:
+            if person.status == 'healthy':
+                healthy += 1
+            elif person.status == 'sick':
+                sick += 1
+            elif person.status == 'recovered':
+                recovered += 1
+            else:
+                dead += 1
+
+        healthy_history.append(healthy)
+        sick_history.append(sick)
+        recovered_history.append(recovered)
+        dead_history.append(dead)
+
+        print(day, healthy, sick, recovered, dead)
 
 
 if __name__ == '__main__':
@@ -231,16 +274,14 @@ if __name__ == '__main__':
 
     print("Family count: " + str(len(familyList)))
 
-
-
-
     ######################################################################
     """ Positive """
+    # simulate(populationSize - 1, 1, personList)
+    print("Day, Healthy, Sick, Recovered, Dead")
 
-
-def simulate(n_healthy, n_sick, iterations):
-    people: list[Person] = [Person('healthy') for i in range(n_healthy)] + \
-                           [Person('sick') for i in range(n_sick)]
+    n_healthy = populationSize - 1
+    n_sick = 1
+    iterations = 100
 
     healthy_history: list[int] = [n_healthy]
     sick_history: list[int] = [n_sick]
@@ -254,7 +295,7 @@ def simulate(n_healthy, n_sick, iterations):
         recovered = 0
         dead = 0
 
-        for person in people:
+        for person in personList:
             if person.status == 'sick' and person.time_sick < 15:
                 person.time_sick += 1
             elif person.status == 'sick' and person.time_sick == 15:
@@ -269,7 +310,7 @@ def simulate(n_healthy, n_sick, iterations):
                 if random.random() < chance_of_infection:
                     person.status = 'sick'
 
-        for person in people:
+        for person in personList:
             if person.status == 'healthy':
                 healthy += 1
             elif person.status == 'sick':
@@ -284,10 +325,15 @@ def simulate(n_healthy, n_sick, iterations):
         recovered_history.append(recovered)
         dead_history.append(dead)
 
-        print(healthy, sick, recovered, dead)
+        print(day, healthy, sick, recovered, dead)
+
+    ######################################################################
+    """ Graph """
 
 
-simulate(populationSize - 1, 1, 100)
+
+
+
 
 
 
