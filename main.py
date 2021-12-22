@@ -4,7 +4,9 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import random
 
-populationSize = 100
+from matplotlib import pyplot as plt, animation
+
+populationSize = 100000
 familySizeMin = 2
 familySizeMax = 7
 wearFaceMask = False
@@ -12,40 +14,6 @@ fatalityRate = 0.1
 
 positiveDate = 5
 
-
-class MyClass:
-    def __init__(self, value):
-        self.value = value
-
-    def get_value(self):
-        return self.value
-
-    def set_value(self, value):
-        self.value = value
-
-    def increment(self):
-        self.value += 1
-
-    def decrement(self):
-        self.value -= 1
-
-    def reset(self):
-        self.value = 0
-
-    def __str__(self):
-        return str(self.value)
-
-    def __repr__(self):
-        return str(self.value)
-
-    def __add__(self, other):
-        return self.value + other.value
-
-    def __sub__(self, other):
-        return self.value - other.value
-
-    def __mul__(self, other):
-        return self.value * other.value
 
 
 class Person:
@@ -281,12 +249,13 @@ if __name__ == '__main__':
 
     n_healthy = populationSize - 1
     n_sick = 1
-    iterations = 100
+    iterations = 1000
 
     healthy_history: list[int] = [n_healthy]
     sick_history: list[int] = [n_sick]
     recovered_history = [0]
     dead_history = [0]
+    dateList: list[int] = [0]
     days = [day for day in range(iterations)]
 
     for day in days:
@@ -294,6 +263,8 @@ if __name__ == '__main__':
         sick = 0
         recovered = 0
         dead = 0
+
+        dateList.append(dateList[-1] + 1)
 
         for person in personList:
             if person.status == 'sick' and person.time_sick < 15:
@@ -328,14 +299,63 @@ if __name__ == '__main__':
         print(day, healthy, sick, recovered, dead)
 
     ######################################################################
+    """ Clear Data Set """
+
+    # remove first element from list
+    dateList.pop(0)
+    healthy_history.pop(0)
+    sick_history.pop(0)
+    recovered_history.pop(0)
+    dead_history.pop(0)
+    print()
+    print(dateList)
+    print(healthy_history)
+    print(sick_history)
+    print(recovered_history)
+    print(dead_history)
+
+    ######################################################################
     """ Graph """
 
+    # Plot the data
+    plt.plot(dateList, healthy_history, label='Healthy')
+    plt.plot(dateList, sick_history, label='Sick')
+    plt.plot(dateList, recovered_history, label='Recovered')
+    plt.plot(dateList, dead_history, label='Dead')
+    plt.xlabel('Days')
+    plt.ylabel('People')
+    plt.title('COVID-19 Simulation')
+    plt.legend()
+    plt.show()
+
+    # animate the graph
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlim(0, iterations)
+    ax.set_ylim(0, populationSize)
+    ax.set_xlabel('Days')
+    ax.set_ylabel('People')
+    ax.set_title('COVID-19 Simulation')
+    line1, = ax.plot([], [], label='Healthy')
+    line2, = ax.plot([], [], label='Sick')
+    line3, = ax.plot([], [], label='Recovered')
+    line4, = ax.plot([], [], label='Dead')
+    ax.legend()
 
 
+    def animate(i):
+        line1.set_data(dateList[:i], healthy_history[:i])
+        line2.set_data(dateList[:i], sick_history[:i])
+        line3.set_data(dateList[:i], recovered_history[:i])
+        line4.set_data(dateList[:i], dead_history[:i])
+        return line1, line2, line3, line4
 
 
+    ani = animation.FuncAnimation(fig, animate, frames=populationSize, interval=populationSize, blit=True)
+    plt.show()
 
-
+    # export the animation
+    ani.save('covid192.gif', writer='ffmpeg', fps=30)
 
 # 100,000 People (Created Person Classes)
 # 30% > are senoir citizens (65 y > age) (Assign age to each person)
@@ -368,6 +388,42 @@ if __name__ == '__main__':
 # total fatalities
 # number of recovered up to 50 days
 
+
+"""
+class MyClass:
+    def __init__(self, value):
+        self.value = value
+
+    def get_value(self):
+        return self.value
+
+    def set_value(self, value):
+        self.value = value
+
+    def increment(self):
+        self.value += 1
+
+    def decrement(self):
+        self.value -= 1
+
+    def reset(self):
+        self.value = 0
+
+    def __str__(self):
+        return str(self.value)
+
+    def __repr__(self):
+        return str(self.value)
+
+    def __add__(self, other):
+        return self.value + other.value
+
+    def __sub__(self, other):
+        return self.value - other.value
+
+    def __mul__(self, other):
+        return self.value * other.value
+"""
 
 """
 
