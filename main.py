@@ -1,9 +1,4 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import random
-
 from matplotlib import pyplot as plt, animation
 
 populationSize = 100000
@@ -11,9 +6,9 @@ familySizeMin = 2
 familySizeMax = 7
 wearFaceMask = False
 fatalityRate = 0.1
+daysToSimulate = 100
 
 positiveDate = 5
-
 
 
 class Person:
@@ -35,15 +30,6 @@ class Person:
 
     def get_age(self):
         return self.age
-
-    def set_positive(self):
-        self.status = "positive"
-
-    def set_infected(self):
-        self.status = "infected"
-
-    def set_recovered(self):
-        self.status = "recovered"
 
     def set_infected_date(self, date):
         self.infectedDate = date
@@ -108,52 +94,6 @@ class Family:
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-def simulate(n_healthy, n_sick, iterations, personList):
-    healthy_history: list[int] = [n_healthy]
-    sick_history: list[int] = [n_sick]
-    recovered_history = [0]
-    dead_history = [0]
-    days = [day for day in range(iterations)]
-
-    for day in days:
-        healthy = 0
-        sick = 0
-        recovered = 0
-        dead = 0
-
-        for person in personList:
-            if person.status == 'sick' and person.time_sick < 15:
-                person.time_sick += 1
-            elif person.status == 'sick' and person.time_sick == 15:
-                # Dead or Alive
-                if random.randint(0, 9) == 4:
-                    person.status = 'dead'
-                else:
-                    person.status = 'recovered'
-
-            if person.status == 'healthy':
-                chance_of_infection = 0.0008
-                if random.random() < chance_of_infection:
-                    person.status = 'sick'
-
-        for person in personList:
-            if person.status == 'healthy':
-                healthy += 1
-            elif person.status == 'sick':
-                sick += 1
-            elif person.status == 'recovered':
-                recovered += 1
-            else:
-                dead += 1
-
-        healthy_history.append(healthy)
-        sick_history.append(sick)
-        recovered_history.append(recovered)
-        dead_history.append(dead)
-
-        print(day, healthy, sick, recovered, dead)
 
 
 if __name__ == '__main__':
@@ -243,20 +183,18 @@ if __name__ == '__main__':
     print("Family count: " + str(len(familyList)))
 
     ######################################################################
-    """ Positive """
-    # simulate(populationSize - 1, 1, personList)
+    """ Simulation """
     print("Day, Healthy, Sick, Recovered, Dead")
 
     n_healthy = populationSize - 1
     n_sick = 1
-    iterations = 1000
 
     healthy_history: list[int] = [n_healthy]
     sick_history: list[int] = [n_sick]
     recovered_history = [0]
     dead_history = [0]
     dateList: list[int] = [0]
-    days = [day for day in range(iterations)]
+    days = [day for day in range(daysToSimulate)]
 
     for day in days:
         healthy = 0
@@ -329,9 +267,11 @@ if __name__ == '__main__':
     plt.show()
 
     # animate the graph
+    # Comment this for fast execution
+    """
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.set_xlim(0, iterations)
+    ax.set_xlim(0, daysToSimulate)
     ax.set_ylim(0, populationSize)
     ax.set_xlabel('Days')
     ax.set_ylabel('People')
@@ -356,21 +296,22 @@ if __name__ == '__main__':
 
     # export the animation
     ani.save('covid192.gif', writer='ffmpeg', fps=30)
+    """
 
 # 100,000 People (Created Person Classes)
-# 30% > are senoir citizens (65 y > age) (Assign age to each person)
+# 30% > are senior citizens (65 y > age) (Assign age to each person)
 # 20% is children (18 y < age)
-# 1 family have 2 - 7  memebers (Randomize member adding to family)
+# 1 family have 2 - 7  members (Randomize member adding to family)
 #
 # 40,000 - essential services TODO
 #
 # Chance of getting infected:
-# 	10-20% - Childrens
+# 	10-20% - Children
 # 	15-40% - adults
 # 	35-60% - senior
 #
-# Wearning facemask reduce risk by 5-10%
-# If 1 fam member get infected, all fam mems 40 - 80%
+# Warning facemask reduce risk by 5-10%
+# If 1 fam member get infected, all fam members 40 - 80%
 #
 # Symptoms show after 5th day
 # From 11th day not infection from person
@@ -480,7 +421,6 @@ class Person:
     print(familyList)
     print()
     # print(familyList[1].get_members_list())
-    print("\nosjdosdjosd\n")
     # print(familyList[0].get_members_list())
 
     # add 2 persons to the family list
