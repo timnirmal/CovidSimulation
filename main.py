@@ -5,7 +5,7 @@
 import random
 from typing import List
 
-populationSize = 100
+populationSize = 100000
 familySizeMin = 2
 familySizeMax = 7
 wearFaceMask = False
@@ -53,12 +53,13 @@ class MyClass:
 class Person:
     __lastId = 1
 
-    def __init__(self):
+    def __init__(self, status):
         self.id = Person.__lastId
         Person.__lastId += 1
         self.age = None
-        self.status = None
-        self.infectedDate = 0
+        self.status = status
+        self.infectedDate = None
+        self.time_sick = 0
 
     def get_id(self):
         return self.id
@@ -153,7 +154,7 @@ if __name__ == '__main__':
     personList: list[Person] = []
 
     for i in range(populationSize):
-        personList.append(Person())
+        personList.append(Person('healthy'))
 
     for person in personList:
         print(person.get_id())
@@ -233,94 +234,60 @@ if __name__ == '__main__':
 
 
 
-
-
-
-
-
-
     ######################################################################
-    """ Run while loop until 100 days """
-
-    day = 1
-    positiveCount = 0
-    deathCount = 0
-    infectedCount = 0
-
-    while day < 10:
-        ######################################################################
-        """ Positive """
-        if day == 1:
-            print("Day " + str(day))
-            print("Make 1 Random Person Positive")
-
-            # get random person from personList
-            randomPerson = random.choice(personList)
-            # set person to be positive
-            randomPerson.set_infected()
-            randomPerson.set_infected_date(day)
-            positiveCount += 1
-
-            # print person id
-            print(randomPerson.get_id())
-            # print person age
-            print(randomPerson.get_age())
-            # print person is positive
-            print(randomPerson.get_status())
-
-            day += 1
-            continue
-
-        else:
-            ######################################################################
-            """ Infected """
-            print("Day " + str(day))
-            print("Infect 1 Random Person")
-
-            # get random person from personList
-            randomPerson = random.choice(personList)
-            # set person to be infected
-            randomPerson.set_infected()
-            randomPerson.set_infected_date(day)
-            positiveCount += 1
-
-            # print person id
-            print(randomPerson.get_id())
-            # print person age
-            print(randomPerson.get_age())
-            # print person is infected
-            print(randomPerson.get_status())
-
-            day += 1
-
-        ######################################################################
-        """ Process Positive Details of Each Person """
-        for person in personList:
-            dateSinceInfected = day - person.get_infected_date()
-
-            if dateSinceInfected == day:
-                print("Person not Infected")
-            elif dateSinceInfected < day:
-                print("Person Infected")
-            elif 5 <= dateSinceInfected <= 11:
-                print("Person is Positive")
+    """ Positive """
 
 
-        ######################################################################
-        """ Show Data of each day """
+def simulate(n_healthy, n_sick, iterations):
+    people: list[Person] = [Person('healthy') for i in range(n_healthy)] + \
+                           [Person('sick') for i in range(n_sick)]
 
-        print("Day " + str(day))
-        print("Positive Count: " + str(positiveCount))
-        print("Death Count: " + str(deathCount))
-        print("Infected Count: " + str(infectedCount))
+    healthy_history: list[int] = [n_healthy]
+    sick_history: list[int] = [n_sick]
+    recovered_history = [0]
+    dead_history = [0]
+    days = [day for day in range(iterations)]
+
+    for day in days:
+        healthy = 0
+        sick = 0
+        recovered = 0
+        dead = 0
+
+        for person in people:
+            if person.status == 'sick' and person.time_sick < 15:
+                person.time_sick += 1
+            elif person.status == 'sick' and person.time_sick == 15:
+                # Dead or Alive
+                if random.randint(0, 9) == 4:
+                    person.status = 'dead'
+                else:
+                    person.status = 'recovered'
+
+            if person.status == 'healthy':
+                chance_of_infection = 0.0008
+                if random.random() < chance_of_infection:
+                    person.status = 'sick'
+
+        for person in people:
+            if person.status == 'healthy':
+                healthy += 1
+            elif person.status == 'sick':
+                sick += 1
+            elif person.status == 'recovered':
+                recovered += 1
+            else:
+                dead += 1
+
+        healthy_history.append(healthy)
+        sick_history.append(sick)
+        recovered_history.append(recovered)
+        dead_history.append(dead)
+
+        print(healthy, sick, recovered, dead)
 
 
-    print("END")
-
-
-
-
-
+simulate(populationSize - 1, 1, 100)
 
 
 
