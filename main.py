@@ -3,6 +3,14 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import random
+from typing import List
+
+populationSize = 100000
+familySizeMin = 2
+familySizeMax = 7
+wearFaceMask = False
+fatalityRate = 0.1
+
 
 
 class MyClass:
@@ -46,9 +54,18 @@ class Person:
     def __init__(self):
         self.id = Person.__lastId
         Person.__lastId += 1
+        self.age = None
+        self.status = None
+        self.infectedDate = None
 
     def get_id(self):
         return self.id
+
+    def set_age(self, age):
+        self.age = age
+
+    def get_age(self):
+        return self.age
 
 
 class Family:
@@ -87,9 +104,8 @@ class Family:
         return self.members
 
     # return members list
-    #def get_members_list_by_age(self):
-     #   return sorted(self.members, key=lambda x: x.age)
-
+    # def get_members_list_by_age(self):
+    #   return sorted(self.members, key=lambda x: x.age)
 
 
 def print_hi(name):
@@ -103,37 +119,56 @@ if __name__ == '__main__':
     # person = Person()
     # print(person.get_id())
 
-    personList = []
+    personList: list[Person] = []
 
-    for i in range(100000):
+    for i in range(populationSize):
         personList.append(Person())
 
     for person in personList:
         print(person.get_id())
 
-    family = Family()
+    ######################################################################
+    """ Setting Ages """
 
-    familyList = []
+    seniorNumber = int(populationSize * 0.3)
+    childrenNumber = int(populationSize * 0.2)
+    adultNumber = populationSize - seniorNumber - childrenNumber
+
+    # set first 30% of population to be seniors
+    for i in range(seniorNumber):
+        personList[i].set_age(random.randint(65, 85))
+
+    # set next adultNumber of population to be adult
+    for i in range(seniorNumber, seniorNumber + adultNumber):
+        personList[i].set_age(random.randint(18, 65))
+
+    # set Last 20% of population to be children
+    for i in range(seniorNumber + adultNumber, populationSize):
+        personList[i].set_age(random.randint(0, 18))
+
+    ######################################################################
+    """ Create family """
+    familyList: list[Family] = []
 
     familyCount = 0
+    memberCountList: list[int] = []
+    # create list number population size
+    for i in range(100000):
+        memberCountList.append(i)
 
-    # create Families with 100 members from personlist
-
-    # while familyCount = 100000
-    while familyCount < 100000:
+    while familyCount < populationSize:
         # create a new Family
         family = Family()
 
         # Generate number between 2 and 7
-        familySize = random.randint(2, 7)
+        familySize = random.randint(familySizeMin, familySizeMax)
 
-        # if familyCount + familySize > 100000
-        if familyCount + familySize > 100000:
+        # if familyCount + familySize > populationSize
+        if familyCount + familySize > populationSize:
             # set familySize to 100000 - familyCount
-            familySize = 100000 - familyCount
-
+            familySize = populationSize - familyCount
         # TODO: Fix this
-        if familySize < 2:
+        if familySize < familySizeMin:
             # add another person to previous family
             family.add_member(personList[familyCount])
             familyCount += 1
@@ -141,7 +176,12 @@ if __name__ == '__main__':
 
         # add 100 members to the Family
         for i in range(familySize):
-            family.add_member(personList[familyCount])
+            # get random member from memberCountList
+            randomMember = random.choice(memberCountList)
+            # remove random member from memberCountList
+            memberCountList.remove(randomMember)
+            # add random member to family
+            family.add_member(personList[randomMember])
             familyCount += 1
         # add the Family to the FamilyList
         familyList.append(family)
@@ -149,7 +189,7 @@ if __name__ == '__main__':
     # print the FamilyList
     for family in familyList:
         print(family.get_family_id())
-        #print(family.get_members_list())
+        # print(family.get_members_list())
         print(family.get_member_count())
         # Person id of first member in family
         print(family.get_member_id(family.get_members_list()[0]))
@@ -160,7 +200,79 @@ if __name__ == '__main__':
     print("Family count: " + str(len(familyList)))
 
 
+    ######################################################################
+    """ Positive """
 
+
+
+
+
+# 100,000 People (Created Person Classes)
+# 30% > are senoir citizens (65 y > age) (Assign age to each person)
+# 20% is children (18 y < age)
+# 1 family have 2 - 7  memebers (Randomize member adding to family)
+#
+# 40,000 - essential services TODO
+#
+# Chance of getting infected:
+# 	10-20% - Childrens
+# 	15-40% - adults
+# 	35-60% - senior
+#
+# Wearning facemask reduce risk by 5-10%
+# If 1 fam member get infected, all fam mems 40 - 80%
+#
+# Symptoms show after 5th day
+# From 11th day not infection from person
+# Hospitalized for 10 days
+#
+# fatality rate 0.1%
+# immune for 6-7 months
+#
+# day 1 - one person get positive
+#
+# wear facemask | enforce/lift travel restriction
+#
+# Daily number of infected persons
+# Total hospitalized patient count
+# total fatalities
+# number of recovered up to 50 days
+
+
+"""
+
+class Person:
+    __lastId = 1
+
+    def __init__(self):
+        self.id = Person.__lastId
+        Person.__lastId += 1
+
+    def get_id(self):
+        return self.id
+
+    def __str__(self):
+        return str(self.id)
+
+    def __repr__(self):
+        return str(self.id)
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __gt__(self, other):
+        return self.id > other.id
+
+    def __le__(self, other):
+        return self.id <= other.id
+
+"""
 
 """
     # print the number of members in each Family
@@ -221,34 +333,3 @@ if __name__ == '__main__':
 
     print("IDs:")
 """
-
-# 100,000 families
-# 1 family have 2 - 7  memebers
-# 30% > are senoir citizens (65 y > age)
-# 20% is children (18 y < age)
-#
-# 40,000 - essential services
-#
-# Chance of getting infected:
-# 	10-20% - Childrens
-# 	15-40% - adults
-# 	35-60% - senior
-#
-# Wearning facemask reduce risk by 5-10%
-# If 1 fam member get infected, all fam mems 40 - 80%
-#
-# Sysmptems show after 5th day
-# From 11th day not infection from person
-# Hospitalized for 10 days
-#
-# fatality rate 0.1%
-# immune for 6-7 months
-#
-# day 1 - one person get positive
-#
-# wear facemask | enforce/lift travel restriction
-#
-# Daily number of infected persons
-# Total hospitalized patient count
-# total fatalities
-# number of recovered up to 50 days
