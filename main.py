@@ -9,6 +9,7 @@ populationSize = 1000
 familySizeMin = 2
 familySizeMax = 7
 wearFaceMask = False
+travelRestrictions = False
 fatalityRate = 0.1
 daysToSimulate = 100
 
@@ -262,7 +263,12 @@ if __name__ == '__main__':
                     elif person.get_age() >= 65:
                         chance_of_infection = random.uniform(0.035, 0.060)
 
+                # Face Mask
+                if wearFaceMask:
+                    chance_of_infection -= random.uniform(0.005, 0.010)
+
                 chance_of_infection = 0.0008
+
                 if random.random() < chance_of_infection:
                     person.status = 'sick'
                     family.set_family_infected(True)
