@@ -17,6 +17,7 @@ positiveDate = 5
 
 class Person:
     __lastId = 1
+    # TODO : Check on changing __lastId from 0 to 1
 
     def __init__(self, status):
         self.id = Person.__lastId
@@ -247,8 +248,19 @@ if __name__ == '__main__':
 
                 # if family is infected
                 if family.get_family_infected():
-                    print("Family infected")
-                    chance_of_infection = 0.0016  # TODO: Define value
+                    if person.get_age() < 18:
+                        chance_of_infection = random.uniform(0.050, 0.100)
+                    elif 18 <= person.get_age() < 65:
+                        chance_of_infection = random.uniform(0.055, 0.120)
+                    elif person.get_age() >= 65:
+                        chance_of_infection = random.uniform(0.075, 0.140)
+                else:
+                    if person.get_age() < 18:
+                        chance_of_infection = random.uniform(0.010, 0.020)
+                    elif 18 <= person.get_age() < 65:
+                        chance_of_infection = random.uniform(0.015, 0.040)
+                    elif person.get_age() >= 65:
+                        chance_of_infection = random.uniform(0.035, 0.060)
 
                 chance_of_infection = 0.0008
                 if random.random() < chance_of_infection:
@@ -342,7 +354,7 @@ if __name__ == '__main__':
         return line1, line2, line3, line4
 
 
-    ani = animation.FuncAnimation(fig, animate, frames=populationSize, interval=populationSize, blit=True)
+    ani = animation.FuncAnimation(fig, animate, frames=populationSize, interval=30, blit=True)
     plt.show()
 
     # export the animation
