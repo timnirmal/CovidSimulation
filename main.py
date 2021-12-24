@@ -1,7 +1,11 @@
 import random
 from matplotlib import pyplot as plt, animation
+import numpy as np
+import pandas as pd
+import plotly.express as px
+from matplotlib.widgets import RadioButtons
 
-populationSize = 100000
+populationSize = 1000
 familySizeMin = 2
 familySizeMax = 7
 wearFaceMask = False
@@ -21,6 +25,7 @@ class Person:
         self.status = status
         self.infectedDate = None
         self.time_sick = 0
+        self.family_id = None
 
     def get_id(self):
         return self.id
@@ -50,6 +55,12 @@ class Person:
         else:
             return "healthy"
 
+    def add_family_id(self, family_id):
+        self.family_id = family_id
+
+    def get_family_id(self):
+        return self.family_id
+
 
 class Family:
     __familyId = 1
@@ -59,6 +70,7 @@ class Family:
         Family.__familyId += 1
 
         self.members = []
+        self.familyInfected = False
 
     def get_members(self):
         return self.members
@@ -85,6 +97,12 @@ class Family:
     # return members list
     def get_members_list(self):
         return self.members
+
+    def get_family_infected(self):
+        return self.familyInfected
+
+    def set_family_infected(self, infected):
+        self.familyInfected = infected
 
     # return members list
     # def get_members_list_by_age(self):
@@ -157,7 +175,7 @@ if __name__ == '__main__':
             familyCount += 1
             continue
 
-        # add 100 members to the Family
+        # add members to the Family
         for i in range(familySize):
             # get random member from memberCountList
             randomMember = random.choice(memberCountList)
@@ -165,6 +183,8 @@ if __name__ == '__main__':
             memberCountList.remove(randomMember)
             # add random member to family
             family.add_member(personList[randomMember])
+            # add family id to random member PersonList
+            personList[randomMember].add_family_id(family.get_family_id())
             familyCount += 1
         # add the Family to the FamilyList
         familyList.append(family)
@@ -205,19 +225,35 @@ if __name__ == '__main__':
         dateList.append(dateList[-1] + 1)
 
         for person in personList:
+            # get persons family id and get family from familyList
+            family_id = person.get_family_id()
+            # print("family_id: " + str(family_id))
+            family = familyList[person.get_family_id() - 1]
+
             if person.status == 'sick' and person.time_sick < 15:
                 person.time_sick += 1
+                family.set_family_infected(True)
             elif person.status == 'sick' and person.time_sick == 15:
+                family.set_family_infected(False)
                 # Dead or Alive
                 if random.randint(0, 9) == 4:
                     person.status = 'dead'
                 else:
                     person.status = 'recovered'
+                    # set family infected to False
 
             if person.status == 'healthy':
+                # Define chance of getting infected
+
+                # if family is infected
+                if family.get_family_infected():
+                    print("Family infected")
+                    chance_of_infection = 0.0016  # TODO: Define value
+
                 chance_of_infection = 0.0008
                 if random.random() < chance_of_infection:
                     person.status = 'sick'
+                    family.set_family_infected(True)
 
         for person in personList:
             if person.status == 'healthy':
@@ -268,7 +304,7 @@ if __name__ == '__main__':
 
     # animate the graph
     # Comment this for fast execution
-    """
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.set_xlim(0, daysToSimulate)
@@ -281,6 +317,21 @@ if __name__ == '__main__':
     line3, = ax.plot([], [], label='Recovered')
     line4, = ax.plot([], [], label='Dead')
     ax.legend()
+
+    # radio button for pause/play matplotlib animation
+
+    # Add a set of radio buttons for changing color
+    axis_color = 'lightgoldenrodyellow'
+    color_radios_ax = fig.add_axes([0.025, 0.5, 0.15, 0.15], facecolor=axis_color)
+    color_radios = RadioButtons(color_radios_ax, ('red', 'blue', 'green'), active=0)
+
+
+    def color_radios_on_clicked(label):
+        line1.set_color(label)
+        fig.canvas.draw_idle()
+
+
+    color_radios.on_clicked(color_radios_on_clicked)
 
 
     def animate(i):
@@ -295,8 +346,7 @@ if __name__ == '__main__':
     plt.show()
 
     # export the animation
-    ani.save('covid192.gif', writer='ffmpeg', fps=30)
-    """
+    ani.save('covid192.gif', writer='ffmpeg', fps=3)
 
 # 100,000 People (Created Person Classes)
 # 30% > are senior citizens (65 y > age) (Assign age to each person)
