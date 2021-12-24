@@ -246,6 +246,7 @@ if __name__ == '__main__':
 
             if person.status == 'healthy':
                 # Define chance of getting infected
+                chance_of_infection = 0
 
                 # if family is infected
                 if family.get_family_infected():
@@ -255,19 +256,22 @@ if __name__ == '__main__':
                         chance_of_infection = random.uniform(0.055, 0.120)
                     elif person.get_age() >= 65:
                         chance_of_infection = random.uniform(0.075, 0.140)
+                    if travelRestrictions:
+                        chance_of_infection += 0.001
                 else:
+                    # if family is not infected
                     if person.get_age() < 18:
                         chance_of_infection = random.uniform(0.010, 0.020)
                     elif 18 <= person.get_age() < 65:
                         chance_of_infection = random.uniform(0.015, 0.040)
                     elif person.get_age() >= 65:
                         chance_of_infection = random.uniform(0.035, 0.060)
+                    if travelRestrictions:
+                        chance_of_infection = 0
 
                 # Face Mask
                 if wearFaceMask:
                     chance_of_infection -= random.uniform(0.005, 0.010)
-
-                chance_of_infection = 0.0008
 
                 if random.random() < chance_of_infection:
                     person.status = 'sick'
