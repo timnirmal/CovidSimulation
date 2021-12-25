@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt, animation
 import numpy as np
 import pandas as pd
 import plotly.express as px
-from matplotlib.widgets import RadioButtons
+from matplotlib.widgets import RadioButtons, Button
 
 populationSize = 1000
 familySizeMin = 2
@@ -28,6 +28,7 @@ class Person:
         self.infectedDate = None
         self.time_sick = 0
         self.family_id = None
+
 
     def get_id(self):
         return self.id
@@ -257,7 +258,8 @@ if __name__ == '__main__':
                     elif person.get_age() >= 65:
                         chance_of_infection = random.uniform(0.075, 0.140)
                     if travelRestrictions:
-                        chance_of_infection += 0.001
+                        chance_of_infection += 0.1
+                    print("family infected" + str(family))
                 else:
                     # if family is not infected
                     if person.get_age() < 18:
@@ -341,11 +343,25 @@ if __name__ == '__main__':
     ax.legend()
 
     # radio button for pause/play matplotlib animation
+    faceMaskButton_ax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    # Add a button for resetting the parameters
+    reset_button_ax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    reset_button = Button(reset_button_ax, 'Reset', hovercolor='0.975')
+
+    def reset_button_on_clicked(mouse_event):
+        print("Value Changed")
+        wearFaceMask = True
+        print(wearFaceMask)
+
+    reset_button.on_clicked(reset_button_on_clicked)
+
 
     # Add a set of radio buttons for changing color
     axis_color = 'lightgoldenrodyellow'
     color_radios_ax = fig.add_axes([0.025, 0.5, 0.15, 0.15], facecolor=axis_color)
     color_radios = RadioButtons(color_radios_ax, ('red', 'blue', 'green'), active=0)
+
+
 
 
     def color_radios_on_clicked(label):
