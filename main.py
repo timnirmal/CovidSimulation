@@ -136,7 +136,30 @@ def person_simulation():
     personNumber = 0
     dateList.append(dateList[-1] + 1)
 
+    print()
     print("Day " + str(day))
+
+    # Number of Deaths for that day = 0.001 * Number of Positive for that day
+    # get last data from sick history
+    l = populationSize - healthy_history[-1]
+    total_deaths = dead_history[-1]
+    print("Number of deaths = " + str(total_deaths))
+    print("Number sick = " + str(l))
+    n = l * 0.1
+    print("Number of fatal = " + str(n))
+    if n > 0 and total_deaths > 0 and day > 12:
+        total_deaths = int(n-total_deaths)
+        print("Number of deaths in n>0= " + str(total_deaths))
+        print("Dead" + str(total_deaths))
+        if total_deaths < 0:
+            total_deaths = 0
+        print("Dead" + str(total_deaths))
+    else:
+        total_deaths = 0
+        print("Number of deaths other = " + str(total_deaths))
+        print("Dead" + str(total_deaths))
+
+
 
     for person in personList:
         # get persons family id and get family from familyList
@@ -150,8 +173,14 @@ def person_simulation():
         elif person.status == 'sick' and person.time_sick == 15:
             family.set_family_infected(False)
             # Dead or Alive
-            if random.randint(0, 9) == 4:
+            print("total deaths : " + str(total_deaths))
+            if total_deaths > 0 and random.random() < 0.09:
                 person.status = 'dead'
+                total_deaths -= 1
+            elif total_deaths <= 0 and random.random() < 0.05:
+                print("========================================================")
+                person.status = 'dead'
+                total_deaths -= 1
             else:
                 person.status = 'recovered'
                 # set family infected to False
@@ -335,6 +364,11 @@ if __name__ == '__main__':
     # First day 1 random person is sick
 
     for day in range(daysToSimulate):
+        # fatality rate
+        # Number of Deaths for that day = 0.001 * Number of Positive for that day
+        fatalityRate = 0.001
+
+
         dead, healthy, recovered, sick = person_simulation()
 
         print(day, healthy, sick, recovered, dead)
