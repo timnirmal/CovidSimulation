@@ -244,15 +244,15 @@ def person_simulation():
 
             if day == 0 and personNumber == 1:
                 print("Out")
-                dead, healthy, recovered, sick = update(dead, healthy, personList, recovered, sick)
-                return dead, healthy, recovered, sick
+                dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick, hospitalized)
+                return dead, healthy, recovered, sick, hospitalized
 
-    dead, healthy, recovered, sick = update(dead, healthy, personList, recovered, sick)
+    dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick, hospitalized)
 
-    return dead, healthy, recovered, sick
+    return dead, healthy, recovered, sick, hospitalized
 
 
-def update(dead, healthy, personList, recovered, sick):
+def update(dead, healthy, personList, recovered, sick, hospitalized):
     for person in personList:
         if person.status == 'healthy':
             healthy += 1
@@ -260,13 +260,17 @@ def update(dead, healthy, personList, recovered, sick):
             sick += 1
         elif person.status == 'recovered':
             recovered += 1
+        elif person.status == 'hospitalized':
+            hospitalized += 1
         else:
             dead += 1
+
     healthy_history.append(healthy)
     sick_history.append(sick)
     recovered_history.append(recovered)
     dead_history.append(dead)
-    return dead, healthy, recovered, sick
+    hospitalized_history.append(hospitalized)
+    return dead, healthy, recovered, sick, hospitalized
 
 
 if __name__ == '__main__':
@@ -373,6 +377,7 @@ if __name__ == '__main__':
 
     healthy_history: list[int] = [n_healthy]
     sick_history: list[int] = [n_sick]
+    hospitalized_history: list[int] = [0]
     recovered_history = [0]
     dead_history = [0]
     dateList: list[int] = [0]
@@ -385,9 +390,9 @@ if __name__ == '__main__':
         # Number of Deaths for that day = 0.001 * Number of Positive for that day
         fatalityRate = 0.001
 
-        dead, healthy, recovered, sick = person_simulation()
+        dead, healthy, recovered, sick, hospitalized = person_simulation()
 
-        print(day, healthy, sick, recovered, dead)
+        print(day, healthy, sick, recovered, dead, hospitalized)
 
     ######################################################################
     """ Clear Data Set """
@@ -398,12 +403,14 @@ if __name__ == '__main__':
     sick_history.pop(0)
     recovered_history.pop(0)
     dead_history.pop(0)
+    hospitalized_history.pop(0)
     print()
     print(dateList)
     print(healthy_history)
     print(sick_history)
     print(recovered_history)
     print(dead_history)
+    print(hospitalized_history)
 
     print()
     print(len(dateList))
@@ -411,6 +418,7 @@ if __name__ == '__main__':
     print(len(sick_history))
     print(len(recovered_history))
     print(len(dead_history))
+    print(len(hospitalized_history))
 
     ######################################################################
     """ Graph """
@@ -420,6 +428,7 @@ if __name__ == '__main__':
     plt.plot(dateList, sick_history, label='infected')
     plt.plot(dateList, recovered_history, label='Recovered')
     plt.plot(dateList, dead_history, label='Dead')
+    plt.plot(dateList, hospitalized_history, label='Hospitalized')
     plt.xlabel('Days')
     plt.ylabel('People')
     plt.title('COVID-19 Simulation')
