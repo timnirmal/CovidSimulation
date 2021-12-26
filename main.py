@@ -12,7 +12,15 @@ wearFaceMask = False
 travelRestrictions = False
 fatalityRate = 0.1
 daysToSimulate = 100
+# TODO:
+chance_of_infection1 = random.uniform(0.050, 0.100)
+chance_of_infection2 = random.uniform(0.055, 0.120)
+chance_of_infection3 = random.uniform(0.075, 0.140)
+chance_of_infection4 = random.uniform(0.010, 0.020)
+chance_of_infection5 = random.uniform(0.015, 0.040)
+chance_of_infection6 = random.uniform(0.035, 0.060)
 
+factor = 1.2
 positiveDate = 5
 
 
@@ -119,10 +127,103 @@ class Family:
     #   return sorted(self.members, key=lambda x: x.age)
 
 
-if __name__ == '__main__':
-    # person = Person()
-    # print(person.get_id())
+def person_simulation():
+    healthy = 0
+    sick = 0
+    recovered = 0
+    hospitalized = 0
+    dead = 0
+    personNumber = 0
+    dateList.append(dateList[-1] + 1)
 
+    print("Day " + str(day))
+
+    for person in personList:
+        # get persons family id and get family from familyList
+        family_id = person.get_family_id()
+        # print("family_id: " + str(family_id))
+        family = familyList[person.get_family_id() - 1]
+
+        if person.status == 'sick' and person.time_sick < 15:
+            person.time_sick += 1
+            family.set_family_infected(True)
+        elif person.status == 'sick' and person.time_sick == 15:
+            family.set_family_infected(False)
+            # Dead or Alive
+            if random.randint(0, 9) == 4:
+                person.status = 'dead'
+            else:
+                person.status = 'recovered'
+                # set family infected to False
+
+        if person.status == 'healthy':
+            # Define chance of getting infected
+            chance_of_infection = 0
+
+            # if family is infected
+            if family.get_family_infected():
+                if person.get_age() < 18:
+                    chance_of_infection = random.uniform(0.050, 0.100)
+                elif 18 <= person.get_age() < 65:
+                    chance_of_infection = random.uniform(0.055, 0.120)
+                elif person.get_age() >= 65:
+                    chance_of_infection = random.uniform(0.075, 0.140)
+                if travelRestrictions:
+                    chance_of_infection += 0.1
+                # print("family infected" + str(family))
+            else:
+                # if family is not infected
+                if person.get_age() < 18:
+                    chance_of_infection = random.uniform(0.010, 0.020)
+                elif 18 <= person.get_age() < 65:
+                    chance_of_infection = random.uniform(0.015, 0.040)
+                elif person.get_age() >= 65:
+                    chance_of_infection = random.uniform(0.035, 0.060)
+                if travelRestrictions:
+                    chance_of_infection = 0
+
+            # Face Mask
+            if wearFaceMask:
+                chance_of_infection = random.uniform(0.005, 0.010)
+
+            # Essential Worker
+            if person.get_essential_worker():
+                chance_of_infection += random.uniform(0.020, 0.040)
+
+            # Update person as sick
+            if random.random() * factor < chance_of_infection:
+                person.status = 'sick'
+                family.set_family_infected(True)
+                personNumber += 1
+
+            if day == 0 and personNumber == 1:
+                print("Out")
+                dead, healthy, recovered, sick = update(dead, healthy, personList, recovered, sick)
+                return dead, healthy, recovered, sick
+
+    dead, healthy, recovered, sick = update(dead, healthy, personList, recovered, sick)
+
+    return dead, healthy, recovered, sick
+
+
+def update(dead, healthy, personList, recovered, sick):
+    for person in personList:
+        if person.status == 'healthy':
+            healthy += 1
+        elif person.status == 'sick':
+            sick += 1
+        elif person.status == 'recovered':
+            recovered += 1
+        else:
+            dead += 1
+    healthy_history.append(healthy)
+    sick_history.append(sick)
+    recovered_history.append(recovered)
+    dead_history.append(dead)
+    return dead, healthy, recovered, sick
+
+
+if __name__ == '__main__':
     personList: list[Person] = []
 
     for i in range(populationSize):
@@ -234,97 +335,7 @@ if __name__ == '__main__':
     # First day 1 random person is sick
 
     for day in range(daysToSimulate):
-        healthy = 0
-        sick = 0
-        recovered = 0
-        dead = 0
-
-        dateList.append(dateList[-1] + 1)
-
-        # First day 1 random person is sick
-        if day == 0:
-            person1 = random.randint(0, populationSize - 1)
-            personList[person1].status = "Sick"
-            sick += 1
-            # person family
-            familyList[personList[person1].get_family_id() - 1].set_family_infected(True)
-            healthy = populationSize -sick
-            healthy_history.append(healthy)
-            sick_history.append(sick)
-            recovered_history.append(recovered)
-            dead_history.append(dead)
-            continue
-
-        for person in personList:
-            # get persons family id and get family from familyList
-            family_id = person.get_family_id()
-            # print("family_id: " + str(family_id))
-            family = familyList[person.get_family_id() - 1]
-
-            if person.status == 'sick' and person.time_sick < 15:
-                person.time_sick += 1
-                family.set_family_infected(True)
-            elif person.status == 'sick' and person.time_sick == 15:
-                family.set_family_infected(False)
-                # Dead or Alive
-                if random.randint(0, 9) == 4:
-                    person.status = 'dead'
-                else:
-                    person.status = 'recovered'
-                    # set family infected to False
-
-            if person.status == 'healthy':
-                # Define chance of getting infected
-                chance_of_infection = 0
-
-                # if family is infected
-                if family.get_family_infected():
-                    if person.get_age() < 18:
-                        chance_of_infection = random.uniform(0.050, 0.100)
-                    elif 18 <= person.get_age() < 65:
-                        chance_of_infection = random.uniform(0.055, 0.120)
-                    elif person.get_age() >= 65:
-                        chance_of_infection = random.uniform(0.075, 0.140)
-                    if travelRestrictions:
-                        chance_of_infection += 0.1
-                    print("family infected" + str(family))
-                else:
-                    # if family is not infected
-                    if person.get_age() < 18:
-                        chance_of_infection = random.uniform(0.010, 0.020)
-                    elif 18 <= person.get_age() < 65:
-                        chance_of_infection = random.uniform(0.015, 0.040)
-                    elif person.get_age() >= 65:
-                        chance_of_infection = random.uniform(0.035, 0.060)
-                    if travelRestrictions:
-                        chance_of_infection = 0
-
-                # Face Mask
-                if wearFaceMask:
-                    chance_of_infection = random.uniform(0.005, 0.010)
-
-                # Essential Worker
-                if person.get_essential_worker():
-                    chance_of_infection += random.uniform(0.020, 0.040)
-
-                if random.random() < chance_of_infection:
-                    person.status = 'sick'
-                    family.set_family_infected(True)
-
-        for person in personList:
-            if person.status == 'healthy':
-                healthy += 1
-            elif person.status == 'sick':
-                sick += 1
-            elif person.status == 'recovered':
-                recovered += 1
-            else:
-                dead += 1
-
-        healthy_history.append(healthy)
-        sick_history.append(sick)
-        recovered_history.append(recovered)
-        dead_history.append(dead)
+        dead, healthy, recovered, sick = person_simulation()
 
         print(day, healthy, sick, recovered, dead)
 
@@ -350,7 +361,6 @@ if __name__ == '__main__':
     print(len(sick_history))
     print(len(recovered_history))
     print(len(dead_history))
-
 
     ######################################################################
     """ Graph """
