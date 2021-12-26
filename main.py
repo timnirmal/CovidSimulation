@@ -140,6 +140,8 @@ def person_simulation():
 
     print()
     print("Day " + str(day))
+    print(wearFaceMask)
+    print(travelRestrictions)
 
     # Number of Deaths for that day = 0.001 * Number of Positive for that day
     # get last data from sick history
@@ -167,8 +169,8 @@ def person_simulation():
         # print("family_id: " + str(family_id))
         family = familyList[person.get_family_id() - 1]
 
-        print(person.time_sick)
-        print(person.status)
+        # print(person.time_sick)
+        # print(person.status)
         if person.status == 'infected' and person.time_sick < 5:
             person.time_sick += 1
             family.set_family_infected(True)
@@ -244,7 +246,8 @@ def person_simulation():
 
             if day == 0 and personNumber == 1:
                 print("Out")
-                dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick, hospitalized)
+                dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick,
+                                                                      hospitalized)
                 return dead, healthy, recovered, sick, hospitalized
 
     dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick, hospitalized)
@@ -274,6 +277,28 @@ def update(dead, healthy, personList, recovered, sick, hospitalized):
 
 
 if __name__ == '__main__':
+    print("\nCovid-19 Simulation\n")
+
+    # print("1. Run Simulation")
+    # print("2. Exit")
+
+    # choice = int(input("Enter your choice: "))
+    # if choice == 1:
+    #     print("Running Simulation")
+    #     runSimulation()
+    # elif choice == 2:
+    #     print("Exiting")
+    # else:
+    #     print("Invalid Choice")
+    #     exit()
+
+    # input
+    print("Fill these values to do the simluation. \n"
+          "If you dont need to add do changes enter number of days you do the simulations as the input\n")
+    wearFaceMaskAt = int(input("\tEnforce Facemask Wear at day : "))
+    enforceTravelRestrictionsAt = int(input("\tEnforce Travel Restrictions At : "))
+    liftTravelRestrictionsAt = int(input("\tLift Travel Restrictions At : "))
+
     personList: list[Person] = []
 
     for i in range(populationSize):
@@ -375,6 +400,7 @@ if __name__ == '__main__':
     n_healthy = populationSize - 1
     n_sick = 1
 
+    # Daily History
     healthy_history: list[int] = [n_healthy]
     sick_history: list[int] = [n_sick]
     hospitalized_history: list[int] = [0]
@@ -389,6 +415,17 @@ if __name__ == '__main__':
         # fatality rate
         # Number of Deaths for that day = 0.001 * Number of Positive for that day
         fatalityRate = 0.001
+
+        print(str(wearFaceMaskAt) + "and" + str(day))
+        if wearFaceMaskAt < day:
+            wearFaceMask = True
+        else:
+            wearFaceMask = False
+
+        if enforceTravelRestrictionsAt <= day <= liftTravelRestrictionsAt:
+            travelRestrictions = True
+        else:
+            travelRestrictions = False
 
         dead, healthy, recovered, sick, hospitalized = person_simulation()
 
