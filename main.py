@@ -1,37 +1,23 @@
 import random
 from matplotlib import pyplot as plt, animation
-import numpy as np
-import pandas as pd
-import plotly.express as px
-from matplotlib.widgets import RadioButtons, Button
 
 populationSize = 1000
+daysToSimulate = 100
 familySizeMin = 2
 familySizeMax = 7
+fatalityRate = 0.1
 wearFaceMask = False
 travelRestrictions = False
-fatalityRate = 0.1
-daysToSimulate = 100
-# TODO:
-chance_of_infection1 = random.uniform(0.050, 0.100)
-chance_of_infection2 = random.uniform(0.055, 0.120)
-chance_of_infection3 = random.uniform(0.075, 0.140)
-chance_of_infection4 = random.uniform(0.010, 0.020)
-chance_of_infection5 = random.uniform(0.015, 0.040)
-chance_of_infection6 = random.uniform(0.035, 0.060)
-
 factor = 1.2
-positiveDate = 5
 
 
 class Person:
     __lastId = 1
 
-    # TODO : Check on changing __lastId from 0 to 1
-
     def __init__(self, status):
         self.id = Person.__lastId
         Person.__lastId += 1
+
         self.age = None
         self.status = status
         self.infectedDate = None
@@ -49,25 +35,6 @@ class Person:
 
     def get_age(self):
         return self.age
-
-    def set_infected_date(self, date):
-        self.infectedDate = date
-
-    def get_infected_date(self):
-        return self.infectedDate
-
-    def get_status(self):
-        return self.status
-
-    def get_status_str(self):
-        if self.status == "positive":
-            return "infected"
-        elif self.status == "infected":
-            return "infected"
-        elif self.status == "recovered":
-            return "recovered"
-        else:
-            return "healthy"
 
     def add_family_id(self, fam_id):
         self.family_id = fam_id
@@ -92,31 +59,14 @@ class Family:
         self.members = []
         self.familyInfected = False
 
-    def get_members(self):
-        return self.members
-
     def add_member(self, member):
         self.members.append(member)
-
-    def remove_member(self, member):
-        self.members.remove(member)
 
     def get_member_count(self):
         return len(self.members)
 
-    def get_member_age(self, member):
-        return member.age
-
-    def get_member_id(self, member):
-        return member.id
-
-    # family id
     def get_family_id(self):
         return self.id
-
-    # return members list
-    def get_members_list(self):
-        return self.members
 
     def get_family_infected(self):
         return self.familyInfected
@@ -124,53 +74,34 @@ class Family:
     def set_family_infected(self, infected):
         self.familyInfected = infected
 
-    # return members list
-    # def get_members_list_by_age(self):
-    #   return sorted(self.members, key=lambda x: x.age)
-
 
 def person_simulation():
+    # int variables for count
     healthy = 0
     sick = 0
     recovered = 0
     hospitalized = 0
     dead = 0
-    personNumber = 0
+    personNumber = 0  # For 1st date
+
     dateList.append(dateList[-1] + 1)
 
-    print()
-    print("Day " + str(day))
-    print(wearFaceMask)
-    print(travelRestrictions)
-
     # Number of Deaths for that day = 0.001 * Number of Positive for that day
-    # get last data from sick history
-    l = populationSize - healthy_history[-1]
+    # get last data from infected history
+    n = (populationSize - healthy_history[-1]) * fatalityRate
     total_deaths = dead_history[-1]
-    print("Number of deaths = " + str(total_deaths))
-    print("Number sick = " + str(l))
-    n = l * 0.1
-    print("Number of fatal = " + str(n))
+
     if n > 0 and total_deaths > 0 and day > 12:
         total_deaths = int(n - total_deaths)
-        print("Number of deaths in n>0= " + str(total_deaths))
-        print("Dead" + str(total_deaths))
         if total_deaths < 0:
             total_deaths = 0
-        print("Dead" + str(total_deaths))
     else:
         total_deaths = 0
-        print("Number of deaths other = " + str(total_deaths))
-        print("Dead" + str(total_deaths))
 
     for person in personList:
         # get persons family id and get family from familyList
-        family_id = person.get_family_id()
-        # print("family_id: " + str(family_id))
         family = familyList[person.get_family_id() - 1]
 
-        # print(person.time_sick)
-        # print(person.status)
         if person.status == 'infected' and person.time_sick < 5:
             person.time_sick += 1
             family.set_family_infected(True)
@@ -183,16 +114,12 @@ def person_simulation():
             person.status = 'hospitalized'
             person.time_sick += 1
         elif person.status == 'hospitalized' and person.time_sick == 15:
-            print("############################################################################")
             family.set_family_infected(False)
             # Dead or Alive
-            print("total deaths : " + str(total_deaths))
             if total_deaths > 0 and random.random() < 0.09:
                 person.status = 'dead'
                 total_deaths -= 1
-                print("**********************************************")
             elif total_deaths <= 0 and random.random() < 0.05:
-                print("========================================================")
                 person.status = 'dead'
                 total_deaths -= 1
             else:
@@ -218,7 +145,6 @@ def person_simulation():
                     chance_of_infection = random.uniform(0.075, 0.140)
                 if travelRestrictions:
                     chance_of_infection += 0.1
-                # print("family infected" + str(family))
             else:
                 # if family is not infected
                 if person.get_age() < 18:
@@ -238,21 +164,16 @@ def person_simulation():
             if person.get_essential_worker():
                 chance_of_infection += random.uniform(0.020, 0.040)
 
-            # Update person as sick
+            # Update person as infected
             if random.random() * factor < chance_of_infection:
                 person.status = 'infected'
                 family.set_family_infected(True)
                 personNumber += 1
 
             if day == 0 and personNumber == 1:
-                print("Out")
-                dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick,
-                                                                      hospitalized)
-                return dead, healthy, recovered, sick, hospitalized
+                return update(dead, healthy, personList, recovered, sick, hospitalized)
 
-    dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick, hospitalized)
-
-    return dead, healthy, recovered, sick, hospitalized
+    return update(dead, healthy, personList, recovered, sick, hospitalized)
 
 
 def update(dead, healthy, personList, recovered, sick, hospitalized):
@@ -279,21 +200,8 @@ def update(dead, healthy, personList, recovered, sick, hospitalized):
 if __name__ == '__main__':
     print("\nCovid-19 Simulation\n")
 
-    # print("1. Run Simulation")
-    # print("2. Exit")
-
-    # choice = int(input("Enter your choice: "))
-    # if choice == 1:
-    #     print("Running Simulation")
-    #     runSimulation()
-    # elif choice == 2:
-    #     print("Exiting")
-    # else:
-    #     print("Invalid Choice")
-    #     exit()
-
-    # input
-    print("Fill these values to do the simluation. \n"
+    # inputs
+    print("Fill these values to do the simulation. \n"
           "If you dont need to add do changes enter number of days you do the simulations as the input\n")
     wearFaceMaskAt = int(input("\tEnforce Facemask Wear at day : "))
     enforceTravelRestrictionsAt = int(input("\tEnforce Travel Restrictions At : "))
@@ -303,9 +211,6 @@ if __name__ == '__main__':
 
     for i in range(populationSize):
         personList.append(Person('healthy'))
-
-    for person in personList:
-        print(person.get_id())
 
     ######################################################################
     """ Setting Ages """
@@ -336,8 +241,6 @@ if __name__ == '__main__':
         personList[random.randint(seniorNumber, seniorNumber + adultNumber)].set_essential_worker(True)
         essentialWorkerNumber += 1
 
-    print("Number of Essential Workers: ", essentialWorkerNumber)
-
     ######################################################################
     """ Create family """
     familyList: list[Family] = []
@@ -359,7 +262,6 @@ if __name__ == '__main__':
         if familyCount + familySize > populationSize:
             # set familySize to 100000 - familyCount
             familySize = populationSize - familyCount
-        # TODO: Fix this
         if familySize < familySizeMin:
             # add another person to previous family
             family.add_member(personList[familyCount])
@@ -380,22 +282,9 @@ if __name__ == '__main__':
         # add the Family to the FamilyList
         familyList.append(family)
 
-    # print the FamilyList
-    for family in familyList:
-        print(family.get_family_id())
-        # print(family.get_members_list())
-        print(family.get_member_count())
-        # Person id of first member in family
-        print(family.get_member_id(family.get_members_list()[0]))
-        # Person id of last member in family
-        print(family.get_member_id(family.get_members_list()[-1]))
-        print()
-
-    print("Family count: " + str(len(familyList)))
-
     ######################################################################
     """ Simulation """
-    print("Day, Healthy, Sick, Recovered, Dead")
+    print("\nDay   Healthy   Sick  Recovered   Dead Hospitalized")
 
     n_healthy = populationSize - 1
     n_sick = 1
@@ -407,16 +296,8 @@ if __name__ == '__main__':
     recovered_history = [0]
     dead_history = [0]
     dateList: list[int] = [0]
-    # days = [day for day in range(daysToSimulate)]
-
-    # First day 1 random person is sick
 
     for day in range(daysToSimulate):
-        # fatality rate
-        # Number of Deaths for that day = 0.001 * Number of Positive for that day
-        fatalityRate = 0.001
-
-        print(str(wearFaceMaskAt) + "and" + str(day))
         if wearFaceMaskAt < day:
             wearFaceMask = True
         else:
@@ -429,7 +310,9 @@ if __name__ == '__main__':
 
         dead, healthy, recovered, sick, hospitalized = person_simulation()
 
-        print(day, healthy, sick, recovered, dead, hospitalized)
+        print(
+            " " + str(day + 1) + "\t\t" + str(healthy) + "\t\t" + str(sick) + "\t\t" + str(recovered) + "\t\t\t" + str(
+                dead) + "\t\t" + str(hospitalized))
 
     ######################################################################
     """ Clear Data Set """
@@ -441,21 +324,6 @@ if __name__ == '__main__':
     recovered_history.pop(0)
     dead_history.pop(0)
     hospitalized_history.pop(0)
-    print()
-    print(dateList)
-    print(healthy_history)
-    print(sick_history)
-    print(recovered_history)
-    print(dead_history)
-    print(hospitalized_history)
-
-    print()
-    print(len(dateList))
-    print(len(healthy_history))
-    print(len(sick_history))
-    print(len(recovered_history))
-    print(len(dead_history))
-    print(len(hospitalized_history))
 
     ######################################################################
     """ Graph """
@@ -476,7 +344,7 @@ if __name__ == '__main__':
     """ Animated Graph """
     # Animate the graph
     # Comment this for fast execution
-    """"
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.set_xlim(0, daysToSimulate)
@@ -488,35 +356,8 @@ if __name__ == '__main__':
     line2, = ax.plot([], [], label='infected')
     line3, = ax.plot([], [], label='Recovered')
     line4, = ax.plot([], [], label='Dead')
+    line5, = ax.plot([], [], label='Hospitalized')
     ax.legend()
-
-    # radio button for pause/play matplotlib animation
-    faceMaskButton_ax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
-    # Add a button for resetting the parameters
-    reset_button_ax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
-    reset_button = Button(reset_button_ax, 'Reset', hovercolor='0.975')
-
-
-    def reset_button_on_clicked(mouse_event):
-        print("Value Changed")
-        wearFaceMask = True
-        print(wearFaceMask)
-
-
-    reset_button.on_clicked(reset_button_on_clicked)
-
-    # Add a set of radio buttons for changing color
-    axis_color = 'lightgoldenrodyellow'
-    color_radios_ax = fig.add_axes([0.025, 0.5, 0.15, 0.15], facecolor=axis_color)
-    color_radios = RadioButtons(color_radios_ax, ('red', 'blue', 'green'), active=0)
-
-
-    def color_radios_on_clicked(label):
-        line1.set_color(label)
-        fig.canvas.draw_idle()
-
-
-    color_radios.on_clicked(color_radios_on_clicked)
 
 
     def animate(i):
@@ -524,22 +365,24 @@ if __name__ == '__main__':
         line2.set_data(dateList[:i], sick_history[:i])
         line3.set_data(dateList[:i], recovered_history[:i])
         line4.set_data(dateList[:i], dead_history[:i])
-        return line1, line2, line3, line4
+        line5.set_data(dateList[:i], hospitalized_history[:i])
+        return line1, line2, line3, line4, line5
 
 
+    # Show Animation
     ani = animation.FuncAnimation(fig, animate, frames=populationSize, interval=30, blit=True)
     plt.show()
 
-    # export the animation
-    ani.save('covid192.gif', writer='ffmpeg', fps=3)
-    """
+    # Export the Animation
+    ani.save('covid19.gif', writer='ffmpeg', fps=30)
 
+# https://github.com/timnirmal/CovidSimulation/
 # 100,000 People (Created Person Classes)
 # 30% > are senior citizens (65 y > age) (Assign age to each person)
 # 20% is children (18 y < age)
 # 1 family have 2 - 7  members (Randomize member adding to family)
 #
-# 40,000 - essential services TODO
+# 40,000 - essential services
 #
 # Chance of getting infected:
 # 	10-20% - Children
@@ -564,134 +407,3 @@ if __name__ == '__main__':
 # Total hospitalized patient count
 # total fatalities
 # number of recovered up to 50 days
-
-
-"""
-class MyClass:
-    def __init__(self, value):
-        self.value = value
-
-    def get_value(self):
-        return self.value
-
-    def set_value(self, value):
-        self.value = value
-
-    def increment(self):
-        self.value += 1
-
-    def decrement(self):
-        self.value -= 1
-
-    def reset(self):
-        self.value = 0
-
-    def __str__(self):
-        return str(self.value)
-
-    def __repr__(self):
-        return str(self.value)
-
-    def __add__(self, other):
-        return self.value + other.value
-
-    def __sub__(self, other):
-        return self.value - other.value
-
-    def __mul__(self, other):
-        return self.value * other.value
-"""
-
-"""
-
-class Person:
-    __lastId = 1
-
-    def __init__(self):
-        self.id = Person.__lastId
-        Person.__lastId += 1
-
-    def get_id(self):
-        return self.id
-
-    def __str__(self):
-        return str(self.id)
-
-    def __repr__(self):
-        return str(self.id)
-
-    def __eq__(self, other):
-        return self.id == other.id
-
-    def __hash__(self):
-        return hash(self.id)
-
-    def __lt__(self, other):
-        return self.id < other.id
-
-    def __gt__(self, other):
-        return self.id > other.id
-
-    def __le__(self, other):
-        return self.id <= other.id
-
-"""
-
-"""
-    # print the number of members in each Family
-    for family in familyList:
-        print(family.get_family_id())
-        print(family.get_member_count())
-"""
-
-"""
-
-
-    for i in range(100):
-        familyList.append(Family())
-        print("Done")
-        # for j in range(50000):
-        #   familyList[i].add_member(personList[j])
-        #  print("Person id " + str(personList[j].get_id()), end= " ")
-
-    print(familyList)
-    print()
-    # print(familyList[1].get_members_list())
-    # print(familyList[0].get_members_list())
-
-    # add 2 persons to the family list
-"""
-
-"""
-    print(family.get_member_count())
-
-    # add 2 person to family from personList
-    for i in range(2):
-        family.add_member(personList[i])
-
-    print(family.get_member_count())
-    print(family.get_member_id(personList[0]))
-    print(family.get_members_list())
-    print("IDs:")
-
-    # for each person in family, print id
-    for person in family.get_members_list():
-        print(person.get_id())
-
-    print("IDs:")
-
-    # add 2 person to family from personList
-    for i in range(2, 4):
-        family.add_member(personList[i])
-
-    print(family.get_member_count())
-    print(family.get_member_id(personList[0]))
-    print(family.get_members_list())
-    print("IDs:")
-
-    # for each person in family, print id
-    for person in family.get_members_list():
-        print(person.get_id())
-
-    print("IDs:")
-"""
