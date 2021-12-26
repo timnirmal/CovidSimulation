@@ -18,6 +18,7 @@ positiveDate = 5
 
 class Person:
     __lastId = 1
+
     # TODO : Check on changing __lastId from 0 to 1
 
     def __init__(self, status):
@@ -27,8 +28,8 @@ class Person:
         self.status = status
         self.infectedDate = None
         self.time_sick = 0
-        self.family_id = None
-
+        self.family_id = 0
+        self.essentialWorker = False
 
     def get_id(self):
         return self.id
@@ -58,11 +59,17 @@ class Person:
         else:
             return "healthy"
 
-    def add_family_id(self, family_id):
-        self.family_id = family_id
+    def add_family_id(self, fam_id):
+        self.family_id = fam_id
 
     def get_family_id(self):
         return self.family_id
+
+    def set_essential_worker(self, is_essential):
+        self.essentialWorker = is_essential
+
+    def get_essential_worker(self):
+        return self.essentialWorker
 
 
 class Family:
@@ -112,14 +119,7 @@ class Family:
     #   return sorted(self.members, key=lambda x: x.age)
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
     # person = Person()
     # print(person.get_id())
 
@@ -149,6 +149,18 @@ if __name__ == '__main__':
     # set Last 20% of population to be children
     for i in range(seniorNumber + adultNumber, populationSize):
         personList[i].set_age(random.randint(0, 18))
+
+    ######################################################################
+    """ Setting Essential Workers """
+    # 40,000 people from 18 to 65 years old are essential workers
+    # 50,000 people are adults
+    essentialWorkerNumber = 0
+
+    while essentialWorkerNumber < 40000:
+        personList[random.randint(seniorNumber, seniorNumber + adultNumber)].set_essential_worker(True)
+        essentialWorkerNumber += 1
+
+    print("Number of Essential Workers: ", essentialWorkerNumber)
 
     ######################################################################
     """ Create family """
@@ -217,15 +229,31 @@ if __name__ == '__main__':
     recovered_history = [0]
     dead_history = [0]
     dateList: list[int] = [0]
-    days = [day for day in range(daysToSimulate)]
+    # days = [day for day in range(daysToSimulate)]
 
-    for day in days:
+    # First day 1 random person is sick
+
+    for day in range(daysToSimulate):
         healthy = 0
         sick = 0
         recovered = 0
         dead = 0
 
         dateList.append(dateList[-1] + 1)
+
+        # First day 1 random person is sick
+        if day == 0:
+            person1 = random.randint(0, populationSize - 1)
+            personList[person1].status = "Sick"
+            sick += 1
+            # person family
+            familyList[personList[person1].get_family_id() - 1].set_family_infected(True)
+            healthy = populationSize -sick
+            healthy_history.append(healthy)
+            sick_history.append(sick)
+            recovered_history.append(recovered)
+            dead_history.append(dead)
+            continue
 
         for person in personList:
             # get persons family id and get family from familyList
@@ -273,7 +301,11 @@ if __name__ == '__main__':
 
                 # Face Mask
                 if wearFaceMask:
-                    chance_of_infection -= random.uniform(0.005, 0.010)
+                    chance_of_infection = random.uniform(0.005, 0.010)
+
+                # Essential Worker
+                if person.get_essential_worker():
+                    chance_of_infection += random.uniform(0.020, 0.040)
 
                 if random.random() < chance_of_infection:
                     person.status = 'sick'
@@ -312,6 +344,14 @@ if __name__ == '__main__':
     print(recovered_history)
     print(dead_history)
 
+    print()
+    print(len(dateList))
+    print(len(healthy_history))
+    print(len(sick_history))
+    print(len(recovered_history))
+    print(len(dead_history))
+
+
     ######################################################################
     """ Graph """
 
@@ -326,9 +366,11 @@ if __name__ == '__main__':
     plt.legend()
     plt.show()
 
-    # animate the graph
+    ######################################################################
+    """ Animated Graph """
+    # Animate the graph
     # Comment this for fast execution
-
+    """"
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.set_xlim(0, daysToSimulate)
@@ -348,20 +390,19 @@ if __name__ == '__main__':
     reset_button_ax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
     reset_button = Button(reset_button_ax, 'Reset', hovercolor='0.975')
 
+
     def reset_button_on_clicked(mouse_event):
         print("Value Changed")
         wearFaceMask = True
         print(wearFaceMask)
 
-    reset_button.on_clicked(reset_button_on_clicked)
 
+    reset_button.on_clicked(reset_button_on_clicked)
 
     # Add a set of radio buttons for changing color
     axis_color = 'lightgoldenrodyellow'
     color_radios_ax = fig.add_axes([0.025, 0.5, 0.15, 0.15], facecolor=axis_color)
     color_radios = RadioButtons(color_radios_ax, ('red', 'blue', 'green'), active=0)
-
-
 
 
     def color_radios_on_clicked(label):
@@ -385,6 +426,7 @@ if __name__ == '__main__':
 
     # export the animation
     ani.save('covid192.gif', writer='ffmpeg', fps=3)
+    """
 
 # 100,000 People (Created Person Classes)
 # 30% > are senior citizens (65 y > age) (Assign age to each person)
