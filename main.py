@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt, animation
 import numpy as np
 import pandas as pd
 import plotly.express as px
-from matplotlib.widgets import RadioButtons
+from matplotlib.widgets import RadioButtons, Button
 
 populationSize = 1000
 familySizeMin = 2
@@ -12,12 +12,21 @@ wearFaceMask = False
 travelRestrictions = False
 fatalityRate = 0.1
 daysToSimulate = 100
+# TODO:
+chance_of_infection1 = random.uniform(0.050, 0.100)
+chance_of_infection2 = random.uniform(0.055, 0.120)
+chance_of_infection3 = random.uniform(0.075, 0.140)
+chance_of_infection4 = random.uniform(0.010, 0.020)
+chance_of_infection5 = random.uniform(0.015, 0.040)
+chance_of_infection6 = random.uniform(0.035, 0.060)
 
+factor = 1.2
 positiveDate = 5
 
 
 class Person:
     __lastId = 1
+
     # TODO : Check on changing __lastId from 0 to 1
 
     def __init__(self, status):
@@ -27,7 +36,10 @@ class Person:
         self.status = status
         self.infectedDate = None
         self.time_sick = 0
-        self.family_id = None
+        self.family_id = 0
+        self.essentialWorker = False
+        self.time_immune = 0
+        self.time_immune_left = 0
 
     def get_id(self):
         return self.id
@@ -57,11 +69,17 @@ class Person:
         else:
             return "healthy"
 
-    def add_family_id(self, family_id):
-        self.family_id = family_id
+    def add_family_id(self, fam_id):
+        self.family_id = fam_id
 
     def get_family_id(self):
         return self.family_id
+
+    def set_essential_worker(self, is_essential):
+        self.essentialWorker = is_essential
+
+    def get_essential_worker(self):
+        return self.essentialWorker
 
 
 class Family:
@@ -111,17 +129,151 @@ class Family:
     #   return sorted(self.members, key=lambda x: x.age)
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def person_simulation():
+    healthy = 0
+    sick = 0
+    recovered = 0
+    hospitalized = 0
+    dead = 0
+    personNumber = 0
+    dateList.append(dateList[-1] + 1)
+
+    print()
+    print("Day " + str(day))
+
+    # Number of Deaths for that day = 0.001 * Number of Positive for that day
+    # get last data from sick history
+    l = populationSize - healthy_history[-1]
+    total_deaths = dead_history[-1]
+    print("Number of deaths = " + str(total_deaths))
+    print("Number sick = " + str(l))
+    n = l * 0.1
+    print("Number of fatal = " + str(n))
+    if n > 0 and total_deaths > 0 and day > 12:
+        total_deaths = int(n - total_deaths)
+        print("Number of deaths in n>0= " + str(total_deaths))
+        print("Dead" + str(total_deaths))
+        if total_deaths < 0:
+            total_deaths = 0
+        print("Dead" + str(total_deaths))
+    else:
+        total_deaths = 0
+        print("Number of deaths other = " + str(total_deaths))
+        print("Dead" + str(total_deaths))
+
+    for person in personList:
+        # get persons family id and get family from familyList
+        family_id = person.get_family_id()
+        # print("family_id: " + str(family_id))
+        family = familyList[person.get_family_id() - 1]
+
+        print(person.time_sick)
+        print(person.status)
+        if person.status == 'infected' and person.time_sick < 5:
+            person.time_sick += 1
+            family.set_family_infected(True)
+        elif person.status == 'infected' and person.time_sick == 5:
+            family.set_family_infected(False)
+            person.status = 'hospitalized'
+            person.time_sick += 1
+        elif person.status == 'hospitalized' and person.time_sick < 15:
+            family.set_family_infected(False)
+            person.status = 'hospitalized'
+            person.time_sick += 1
+        elif person.status == 'hospitalized' and person.time_sick == 15:
+            print("############################################################################")
+            family.set_family_infected(False)
+            # Dead or Alive
+            print("total deaths : " + str(total_deaths))
+            if total_deaths > 0 and random.random() < 0.09:
+                person.status = 'dead'
+                total_deaths -= 1
+                print("**********************************************")
+            elif total_deaths <= 0 and random.random() < 0.05:
+                print("========================================================")
+                person.status = 'dead'
+                total_deaths -= 1
+            else:
+                person.status = 'recovered'
+                person.time_immune = random.randint(180, 210)
+
+        if person.status == 'recovered' and person.time_immune > 0:
+            person.time_immune_left -= 1
+        if person.status == 'recovered' and person.time_immune <= 0:
+            person.status = 'healthy'
+
+        if person.status == 'healthy':
+            # Define chance of getting infected
+            chance_of_infection = 0
+
+            # if family is infected
+            if family.get_family_infected():
+                if person.get_age() < 18:
+                    chance_of_infection = random.uniform(0.050, 0.100)
+                elif 18 <= person.get_age() < 65:
+                    chance_of_infection = random.uniform(0.055, 0.120)
+                elif person.get_age() >= 65:
+                    chance_of_infection = random.uniform(0.075, 0.140)
+                if travelRestrictions:
+                    chance_of_infection += 0.1
+                # print("family infected" + str(family))
+            else:
+                # if family is not infected
+                if person.get_age() < 18:
+                    chance_of_infection = random.uniform(0.010, 0.020)
+                elif 18 <= person.get_age() < 65:
+                    chance_of_infection = random.uniform(0.015, 0.040)
+                elif person.get_age() >= 65:
+                    chance_of_infection = random.uniform(0.035, 0.060)
+                if travelRestrictions:
+                    chance_of_infection = 0
+
+            # Face Mask
+            if wearFaceMask:
+                chance_of_infection = random.uniform(0.005, 0.010)
+
+            # Essential Worker
+            if person.get_essential_worker():
+                chance_of_infection += random.uniform(0.020, 0.040)
+
+            # Update person as sick
+            if random.random() * factor < chance_of_infection:
+                person.status = 'infected'
+                family.set_family_infected(True)
+                personNumber += 1
+
+            if day == 0 and personNumber == 1:
+                print("Out")
+                dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick, hospitalized)
+                return dead, healthy, recovered, sick, hospitalized
+
+    dead, healthy, recovered, sick, hospitalized = update(dead, healthy, personList, recovered, sick, hospitalized)
+
+    return dead, healthy, recovered, sick, hospitalized
+
+
+def update(dead, healthy, personList, recovered, sick, hospitalized):
+    for person in personList:
+        if person.status == 'healthy':
+            healthy += 1
+        elif person.status == 'infected':
+            sick += 1
+        elif person.status == 'recovered':
+            recovered += 1
+        elif person.status == 'hospitalized':
+            hospitalized += 1
+        else:
+            dead += 1
+
+    healthy_history.append(healthy)
+    sick_history.append(sick)
+    recovered_history.append(recovered)
+    dead_history.append(dead)
+    hospitalized_history.append(hospitalized)
+    return dead, healthy, recovered, sick, hospitalized
 
 
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-    # person = Person()
-    # print(person.get_id())
-
     personList: list[Person] = []
 
     for i in range(populationSize):
@@ -148,6 +300,18 @@ if __name__ == '__main__':
     # set Last 20% of population to be children
     for i in range(seniorNumber + adultNumber, populationSize):
         personList[i].set_age(random.randint(0, 18))
+
+    ######################################################################
+    """ Setting Essential Workers """
+    # 40,000 people from 18 to 65 years old are essential workers
+    # 50,000 people are adults
+    essentialWorkerNumber = 0
+
+    while essentialWorkerNumber < 40000:
+        personList[random.randint(seniorNumber, seniorNumber + adultNumber)].set_essential_worker(True)
+        essentialWorkerNumber += 1
+
+    print("Number of Essential Workers: ", essentialWorkerNumber)
 
     ######################################################################
     """ Create family """
@@ -213,86 +377,22 @@ if __name__ == '__main__':
 
     healthy_history: list[int] = [n_healthy]
     sick_history: list[int] = [n_sick]
+    hospitalized_history: list[int] = [0]
     recovered_history = [0]
     dead_history = [0]
     dateList: list[int] = [0]
-    days = [day for day in range(daysToSimulate)]
+    # days = [day for day in range(daysToSimulate)]
 
-    for day in days:
-        healthy = 0
-        sick = 0
-        recovered = 0
-        dead = 0
+    # First day 1 random person is sick
 
-        dateList.append(dateList[-1] + 1)
+    for day in range(daysToSimulate):
+        # fatality rate
+        # Number of Deaths for that day = 0.001 * Number of Positive for that day
+        fatalityRate = 0.001
 
-        for person in personList:
-            # get persons family id and get family from familyList
-            family_id = person.get_family_id()
-            # print("family_id: " + str(family_id))
-            family = familyList[person.get_family_id() - 1]
+        dead, healthy, recovered, sick, hospitalized = person_simulation()
 
-            if person.status == 'sick' and person.time_sick < 15:
-                person.time_sick += 1
-                family.set_family_infected(True)
-            elif person.status == 'sick' and person.time_sick == 15:
-                family.set_family_infected(False)
-                # Dead or Alive
-                if random.randint(0, 9) == 4:
-                    person.status = 'dead'
-                else:
-                    person.status = 'recovered'
-                    # set family infected to False
-
-            if person.status == 'healthy':
-                # Define chance of getting infected
-                chance_of_infection = 0
-
-                # if family is infected
-                if family.get_family_infected():
-                    if person.get_age() < 18:
-                        chance_of_infection = random.uniform(0.050, 0.100)
-                    elif 18 <= person.get_age() < 65:
-                        chance_of_infection = random.uniform(0.055, 0.120)
-                    elif person.get_age() >= 65:
-                        chance_of_infection = random.uniform(0.075, 0.140)
-                    if travelRestrictions:
-                        chance_of_infection += 0.001
-                else:
-                    # if family is not infected
-                    if person.get_age() < 18:
-                        chance_of_infection = random.uniform(0.010, 0.020)
-                    elif 18 <= person.get_age() < 65:
-                        chance_of_infection = random.uniform(0.015, 0.040)
-                    elif person.get_age() >= 65:
-                        chance_of_infection = random.uniform(0.035, 0.060)
-                    if travelRestrictions:
-                        chance_of_infection = 0
-
-                # Face Mask
-                if wearFaceMask:
-                    chance_of_infection -= random.uniform(0.005, 0.010)
-
-                if random.random() < chance_of_infection:
-                    person.status = 'sick'
-                    family.set_family_infected(True)
-
-        for person in personList:
-            if person.status == 'healthy':
-                healthy += 1
-            elif person.status == 'sick':
-                sick += 1
-            elif person.status == 'recovered':
-                recovered += 1
-            else:
-                dead += 1
-
-        healthy_history.append(healthy)
-        sick_history.append(sick)
-        recovered_history.append(recovered)
-        dead_history.append(dead)
-
-        print(day, healthy, sick, recovered, dead)
+        print(day, healthy, sick, recovered, dead, hospitalized)
 
     ######################################################################
     """ Clear Data Set """
@@ -303,30 +403,43 @@ if __name__ == '__main__':
     sick_history.pop(0)
     recovered_history.pop(0)
     dead_history.pop(0)
+    hospitalized_history.pop(0)
     print()
     print(dateList)
     print(healthy_history)
     print(sick_history)
     print(recovered_history)
     print(dead_history)
+    print(hospitalized_history)
+
+    print()
+    print(len(dateList))
+    print(len(healthy_history))
+    print(len(sick_history))
+    print(len(recovered_history))
+    print(len(dead_history))
+    print(len(hospitalized_history))
 
     ######################################################################
     """ Graph """
 
     # Plot the data
     plt.plot(dateList, healthy_history, label='Healthy')
-    plt.plot(dateList, sick_history, label='Sick')
+    plt.plot(dateList, sick_history, label='infected')
     plt.plot(dateList, recovered_history, label='Recovered')
     plt.plot(dateList, dead_history, label='Dead')
+    plt.plot(dateList, hospitalized_history, label='Hospitalized')
     plt.xlabel('Days')
     plt.ylabel('People')
     plt.title('COVID-19 Simulation')
     plt.legend()
     plt.show()
 
-    # animate the graph
+    ######################################################################
+    """ Animated Graph """
+    # Animate the graph
     # Comment this for fast execution
-
+    """"
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.set_xlim(0, daysToSimulate)
@@ -335,12 +448,25 @@ if __name__ == '__main__':
     ax.set_ylabel('People')
     ax.set_title('COVID-19 Simulation')
     line1, = ax.plot([], [], label='Healthy')
-    line2, = ax.plot([], [], label='Sick')
+    line2, = ax.plot([], [], label='infected')
     line3, = ax.plot([], [], label='Recovered')
     line4, = ax.plot([], [], label='Dead')
     ax.legend()
 
     # radio button for pause/play matplotlib animation
+    faceMaskButton_ax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    # Add a button for resetting the parameters
+    reset_button_ax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    reset_button = Button(reset_button_ax, 'Reset', hovercolor='0.975')
+
+
+    def reset_button_on_clicked(mouse_event):
+        print("Value Changed")
+        wearFaceMask = True
+        print(wearFaceMask)
+
+
+    reset_button.on_clicked(reset_button_on_clicked)
 
     # Add a set of radio buttons for changing color
     axis_color = 'lightgoldenrodyellow'
@@ -369,6 +495,7 @@ if __name__ == '__main__':
 
     # export the animation
     ani.save('covid192.gif', writer='ffmpeg', fps=3)
+    """
 
 # 100,000 People (Created Person Classes)
 # 30% > are senior citizens (65 y > age) (Assign age to each person)
