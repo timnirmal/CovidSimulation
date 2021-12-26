@@ -38,6 +38,8 @@ class Person:
         self.time_sick = 0
         self.family_id = 0
         self.essentialWorker = False
+        self.time_immune = 0
+        self.time_immune_left = 0
 
     def get_id(self):
         return self.id
@@ -148,7 +150,7 @@ def person_simulation():
     n = l * 0.1
     print("Number of fatal = " + str(n))
     if n > 0 and total_deaths > 0 and day > 12:
-        total_deaths = int(n-total_deaths)
+        total_deaths = int(n - total_deaths)
         print("Number of deaths in n>0= " + str(total_deaths))
         print("Dead" + str(total_deaths))
         if total_deaths < 0:
@@ -159,31 +161,46 @@ def person_simulation():
         print("Number of deaths other = " + str(total_deaths))
         print("Dead" + str(total_deaths))
 
-
-
     for person in personList:
         # get persons family id and get family from familyList
         family_id = person.get_family_id()
         # print("family_id: " + str(family_id))
         family = familyList[person.get_family_id() - 1]
 
-        if person.status == 'sick' and person.time_sick < 15:
+        print(person.time_sick)
+        print(person.status)
+        if person.status == 'infected' and person.time_sick < 5:
             person.time_sick += 1
             family.set_family_infected(True)
-        elif person.status == 'sick' and person.time_sick == 15:
+        elif person.status == 'infected' and person.time_sick == 5:
+            family.set_family_infected(False)
+            person.status = 'hospitalized'
+            person.time_sick += 1
+        elif person.status == 'hospitalized' and person.time_sick < 15:
+            family.set_family_infected(False)
+            person.status = 'hospitalized'
+            person.time_sick += 1
+        elif person.status == 'hospitalized' and person.time_sick == 15:
+            print("############################################################################")
             family.set_family_infected(False)
             # Dead or Alive
             print("total deaths : " + str(total_deaths))
             if total_deaths > 0 and random.random() < 0.09:
                 person.status = 'dead'
                 total_deaths -= 1
+                print("**********************************************")
             elif total_deaths <= 0 and random.random() < 0.05:
                 print("========================================================")
                 person.status = 'dead'
                 total_deaths -= 1
             else:
                 person.status = 'recovered'
-                # set family infected to False
+                person.time_immune = random.randint(180, 210)
+
+        if person.status == 'recovered' and person.time_immune > 0:
+            person.time_immune_left -= 1
+        if person.status == 'recovered' and person.time_immune <= 0:
+            person.status = 'healthy'
 
         if person.status == 'healthy':
             # Define chance of getting infected
@@ -221,7 +238,7 @@ def person_simulation():
 
             # Update person as sick
             if random.random() * factor < chance_of_infection:
-                person.status = 'sick'
+                person.status = 'infected'
                 family.set_family_infected(True)
                 personNumber += 1
 
@@ -239,7 +256,7 @@ def update(dead, healthy, personList, recovered, sick):
     for person in personList:
         if person.status == 'healthy':
             healthy += 1
-        elif person.status == 'sick':
+        elif person.status == 'infected':
             sick += 1
         elif person.status == 'recovered':
             recovered += 1
@@ -368,7 +385,6 @@ if __name__ == '__main__':
         # Number of Deaths for that day = 0.001 * Number of Positive for that day
         fatalityRate = 0.001
 
-
         dead, healthy, recovered, sick = person_simulation()
 
         print(day, healthy, sick, recovered, dead)
@@ -401,7 +417,7 @@ if __name__ == '__main__':
 
     # Plot the data
     plt.plot(dateList, healthy_history, label='Healthy')
-    plt.plot(dateList, sick_history, label='Sick')
+    plt.plot(dateList, sick_history, label='infected')
     plt.plot(dateList, recovered_history, label='Recovered')
     plt.plot(dateList, dead_history, label='Dead')
     plt.xlabel('Days')
@@ -423,7 +439,7 @@ if __name__ == '__main__':
     ax.set_ylabel('People')
     ax.set_title('COVID-19 Simulation')
     line1, = ax.plot([], [], label='Healthy')
-    line2, = ax.plot([], [], label='Sick')
+    line2, = ax.plot([], [], label='infected')
     line3, = ax.plot([], [], label='Recovered')
     line4, = ax.plot([], [], label='Dead')
     ax.legend()
